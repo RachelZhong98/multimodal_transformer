@@ -1,6 +1,6 @@
 import torch.nn as nn
 from torchtext.vocab import GloVe
-from 
+# from 
 
 class MultimodelTransformer(nn.Module):
     def __init__(self, vocabulary: Vocabulary, image_feature_size: int,num_attention_block: int,
