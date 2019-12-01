@@ -17,12 +17,12 @@ from mt.data.datasets import (
     EvaluationDataset,
     EvaluationDatasetWithConstraints,
 )
-from mt.models import UpDownCaptioner
+# from mt.models import UpDownCaptioner
 from mt.types import Prediction
 from mt.utils.checkpointing import CheckpointManager
 from mt.utils.common import cycle
 from mt.utils.evalai import NocapsEvaluator
-from mt.utils.constraints import add_constraint_words_to_vocabulary
+# from mt.utils.constraints import add_constraint_words_to_vocabulary
 
 
 parser = argparse.ArgumentParser("Training")
