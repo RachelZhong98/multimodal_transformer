@@ -2,11 +2,11 @@ RANDOM_SEED: 0
 
 DATA:
   VOCABULARY: data/vocabulary
-  TRAIN_FEATURES: data/coco_train2017_features_maskrcnn.h5
-  INFER_FEATURES: data/nocaps_val_features_maskrcnn.h5
+  TRAIN_FEATURES: data/small_sample_test.h5
+  INFER_FEATURES: data/nocaps_small_sample_test.h5
 
-  TRAIN_CAPTIONS: data/coco/captions_train2017.json
-  INFER_CAPTIONS: data/nocaps/nocaps_val_image_info.json
+  TRAIN_CAPTIONS: data/coco/annotations/coco_sample.json
+  INFER_CAPTIONS: data/nocaps/nocaps_val_sample.json
 
   MAX_CAPTION_LENGTH:  20
 
@@ -28,8 +28,8 @@ MODEL:
   
 
 OPTIM:
-  BATCH_SIZE: 25
-  NUM_ITERATIONS: 70000
+  BATCH_SIZE: 10
+  NUM_ITERATIONS: 100
   LR: 0.015
   MOMENTUM: 0.9
   WEIGHT_DECAY: 0.001

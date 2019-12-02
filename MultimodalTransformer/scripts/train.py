@@ -17,12 +17,12 @@ from mt.data.datasets import (
     EvaluationDataset,
     EvaluationDatasetWithConstraints,
 )
-from mt.models import UpDownCaptioner
+from mt.models.mt_model import MultimodelTransformer
 from mt.types import Prediction
 from mt.utils.checkpointing import CheckpointManager
 from mt.utils.common import cycle
 from mt.utils.evalai import NocapsEvaluator
-from mt.utils.constraints import add_constraint_words_to_vocabulary
+# from mt.utils.constraints import add_constraint_words_to_vocabulary
 
 
 parser = argparse.ArgumentParser("Training")
@@ -129,6 +129,10 @@ if __name__ == "__main__":
     val_dataset = EvaluationDatasetClass.from_config(
         _C, vocabulary=vocabulary, in_memory=_A.in_memory
     )
+    # Use a smaller batch during validation (accounting beam size) to fit in memory.
+    val_batch_size = _C.OPTIM.BATCH_SIZE // _C.MODEL.BEAM_SIZE
+
+
 
     val_dataloader = DataLoader(
         val_dataset,
@@ -146,7 +150,7 @@ if __name__ == "__main__":
     optimizer = optim.Adam(
         model.parameters(),
         lr=_C.OPTIM.LR,
-        momentum=_C.OPTIM.MOMENTUM,
+        # momentum=_C.OPTIM.MOMENTUM,
         weight_decay=_C.OPTIM.WEIGHT_DECAY,
     )
     lr_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
@@ -191,7 +195,7 @@ if __name__ == "__main__":
         batch = next(train_dataloader)
 
         optimizer.zero_grad()
-        output_dict = model(batch["image_features"], batch["caption_tokens"])
+        output_dict = model(batch["image_features"], batch["caption_tokens"], device)
         batch_loss = output_dict["loss"].mean()
 
         batch_loss.backward()
@@ -203,7 +207,43 @@ if __name__ == "__main__":
         # Log loss and learning rate to tensorboard.
         tensorboard_writer.add_scalar("loss", batch_loss, iteration)
         tensorboard_writer.add_scalar("learning_rate", optimizer.param_groups[0]["lr"], iteration)
+        # #Added
+        # for batch in tqdm(val_dataloader):
+        #             # keys: {"image_id", "image_features"}
+        #     batch = {key: value.to(device) for key, value in batch.items()}
 
+        #     with torch.no_grad():
+        #                 # shape: (batch_size, max_caption_length)
+        #                 # Pass finite state machine and number of constraints if using CBS.
+        #         batch_predictions = model(
+        #             batch["image_features"],
+        #             # fsm=batch.get("fsm", None),
+        #             # num_constraints=batch.get("num_constraints", None),
+        #         )["predictions"]
+
+        #     for i, image_id in enumerate(batch["image_id"]):
+        #         instance_predictions = batch_predictions[i, :]
+
+        #         # De-tokenize caption tokens and trim until first "@@BOUNDARY@@".
+        #         caption = [
+        #             vocabulary.get_token_from_index(p.item()) for p in instance_predictions
+        #         ]
+        #         eos_occurences = [
+        #             j for j in range(len(caption)) if caption[j] == "@@BOUNDARY@@"
+        #         ]
+        #         caption = (
+        #             caption[: eos_occurences[0]] if len(eos_occurences) > 0 else caption
+        #         )
+        #         predictions.append(
+        #             {"image_id": image_id.item(), "caption": " ".join(caption)}
+        #         )
+
+        # model.train()
+
+        # # Print first 25 captions with their Image ID.
+        # for k in range(25):
+        #     print(predictions[k]["image_id"], predictions[k]["caption"])
+        
         # ----------------------------------------------------------------------------------------
         #   VALIDATION
         # ----------------------------------------------------------------------------------------
@@ -221,8 +261,8 @@ if __name__ == "__main__":
                         # Pass finite state machine and number of constraints if using CBS.
                         batch_predictions = model(
                             batch["image_features"],
-                            fsm=batch.get("fsm", None),
-                            num_constraints=batch.get("num_constraints", None),
+                            # fsm=batch.get("fsm", None),
+                            # num_constraints=batch.get("num_constraints", None),
                         )["predictions"]
 
                     for i, image_id in enumerate(batch["image_id"]):
@@ -247,7 +287,7 @@ if __name__ == "__main__":
                 # Print first 25 captions with their Image ID.
                 for k in range(25):
                     print(predictions[k]["image_id"], predictions[k]["caption"])
-
+               
                 # Get evaluation metrics for nocaps val phase from EvalAI.
                 # keys: {"B1", "B2", "B3", "B4", "METEOR", "ROUGE-L", "CIDEr", "SPICE"}
                 # In each of these, keys:  {"in-domain", "near-domain", "out-domain", "entire"}

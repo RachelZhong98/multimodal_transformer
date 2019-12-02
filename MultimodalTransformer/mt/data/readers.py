@@ -14,7 +14,7 @@ from nltk.tokenize import word_tokenize
 import numpy as np
 from tqdm import tqdm
 
-from updown.types import ConstraintBoxes
+from mt.types import ConstraintBoxes
 
 
 class ImageFeaturesReader(object):
@@ -57,7 +57,6 @@ class ImageFeaturesReader(object):
             for index in tqdm(range(features_h5["image_id"].shape[0])):
                 self._map[features_h5["image_id"][index]] = features_h5["features"][index]
                 self._num_boxes[features_h5["image_id"][index]] = features_h5["num_boxes"][index]
-
             features_h5.close()
         else:
             self.features_h5 = h5py.File(self.features_h5path, "r")
@@ -72,6 +71,7 @@ class ImageFeaturesReader(object):
                 image_id_np[index]: self.features_h5["num_boxes"][index]
                 for index in range(image_id_np.shape[0])
             }
+        
 
     def __len__(self) -> int:
         return len(self._map)
@@ -121,6 +121,9 @@ class CocoCaptionsReader(object):
             caption_tokens = [ct for ct in caption_tokens if ct not in PUNCTUATIONS]
 
             self._captions.append((caption_item["image_id"], caption_tokens))
+        #     print(caption_item["image_id"])
+        # print(len(self._captions))
+        
 
     def __len__(self) -> int:
         return len(self._captions)

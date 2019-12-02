@@ -120,24 +120,24 @@ class Config(object):
         _C.DATA = CN()
         _C.DATA.VOCABULARY = "data/vocabulary"
 
-        _C.DATA.TRAIN_FEATURES = "data/coco_train2017_features_maskrcnn.h5" # change to coco train features Fast RCNN
-        _C.DATA.INFER_FEATURES = "data/nocaps_val_features_maskrcnn.h5" # change to nocaps val features Fast RCNN
+        _C.DATA.TRAIN_FEATURES = "data/small_sample_test.h5" # change to coco train features Fast RCNN
+        _C.DATA.INFER_FEATURES = "data/nocaps_small_sample_test.h5" # change to nocaps val features Fast RCNN
 
         # DATA.INFER_CAPTIONS don't contain the captions, just the image info.
-        _C.DATA.TRAIN_CAPTIONS = "data/coco/captions_train2017.json"
-        _C.DATA.INFER_CAPTIONS = "data/nocaps/nocaps_val_image_info.json"
+        _C.DATA.TRAIN_CAPTIONS = "data/coco/annotations/coco_sample.json"
+        _C.DATA.INFER_CAPTIONS = "data/nocaps/nocaps_val_sample.json"
 
         _C.DATA.MAX_CAPTION_LENGTH = 20
 
         # There's no parameter as DATA.CBS.TRAIN_BOXES because CBS is inference-only.
-        # _C.DATA.CBS = CN()
-        # _C.DATA.CBS.INFER_BOXES = "data/nocaps_val_oi_detector_boxes.json"
-        # _C.DATA.CBS.CLASS_HIERARCHY = "data/cbs/class_hierarchy.json"
-        # _C.DATA.CBS.WORDFORMS = "data/cbs/constraint_wordforms.tsv"
+        _C.DATA.CBS = CN()
+        _C.DATA.CBS.INFER_BOXES = "data/nocaps_val_oi_detector_boxes.json"
+        _C.DATA.CBS.CLASS_HIERARCHY = "data/cbs/class_hierarchy.json"
+        _C.DATA.CBS.WORDFORMS = "data/cbs/constraint_wordforms.tsv"
 
-        # _C.DATA.CBS.NMS_THRESHOLD = 0.85
-        # _C.DATA.CBS.MAX_GIVEN_CONSTRAINTS = 3
-        # _C.DATA.CBS.MAX_WORDS_PER_CONSTRAINT = 3
+        _C.DATA.CBS.NMS_THRESHOLD = 0.85
+        _C.DATA.CBS.MAX_GIVEN_CONSTRAINTS = 3
+        _C.DATA.CBS.MAX_WORDS_PER_CONSTRAINT = 3
 
         _C.MODEL = CN()
         _C.MODEL.IMAGE_FEATURE_SIZE = 2048
@@ -145,15 +145,17 @@ class Config(object):
         _C.MODEL.NUM_ATTENTION_BLOCK = 4
         _C.MODEL.CAPTION_LENGTH = 16
         _C.MODEL.VOCAB_SIZE = 9343
-        _C.FEED_FORWARD_DIM = 512
+        _C.MODEL.FEED_FORWARD_DIM = 512
         _C.MODEL.ENCODE_DIM = 2048
         _C.MODEL.NUM_HEADS = 8
         _C.MODEL.HIDDEN_SIZE = 1200
         _C.MODEL.USE_CBS = False
         _C.MODEL.MIN_CONSTRAINTS_TO_SATISFY = 2
+        _C.MODEL.BEAM_SIZE = 1
+        _C.MODEL.ATTENTION_PROJECTION_SIZE = 768
 
         _C.OPTIM = CN()
-        _C.OPTIM.BATCH_SIZE = 10
+        _C.OPTIM.BATCH_SIZE = 150
         _C.OPTIM.NUM_ITERATIONS = 70000
         _C.OPTIM.LR = 0.0003
         _C.OPTIM.MOMENTUM = 0.9

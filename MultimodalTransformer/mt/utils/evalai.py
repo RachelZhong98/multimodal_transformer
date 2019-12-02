@@ -6,7 +6,7 @@ import tempfile
 import time
 from typing import Any, Dict, List, Optional
 
-from updown.types import Prediction
+from mt.types import Prediction
 
 
 class NocapsEvaluator(object):

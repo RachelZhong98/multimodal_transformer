@@ -5,9 +5,9 @@ import torch
 from torch.utils.data import Dataset
 from allennlp.data import Vocabulary
 
-from updown.config import Config
-from updown.data.readers import CocoCaptionsReader, ConstraintBoxesReader, ImageFeaturesReader
-from updown.types import (
+from mt.config import Config
+from mt.data.readers import CocoCaptionsReader, ConstraintBoxesReader, ImageFeaturesReader
+from mt.types import (
     TrainingInstance,
     TrainingBatch,
     EvaluationInstance,
@@ -15,7 +15,7 @@ from updown.types import (
     EvaluationBatch,
     EvaluationBatchWithConstraints,
 )
-from updown.utils.constraints import ConstraintFilter, FiniteStateMachineBuilder
+# from mt.utils.constraints import ConstraintFilter, FiniteStateMachineBuilder
 
 
 class TrainingDataset(Dataset):
@@ -71,6 +71,7 @@ class TrainingDataset(Dataset):
     def __len__(self) -> int:
         # Number of training examples are number of captions, not number of images.
         return len(self._captions_reader)
+        # return 5
 
     def __getitem__(self, index: int) -> TrainingInstance:
         image_id, caption = self._captions_reader[index]
