@@ -9,6 +9,7 @@ import torch
 from allennlp.nn.beam_search import BeamSearch
 from mt.modules import UpDownCell
 from mt.utils.decoding import select_best_beam
+
 class MultimodelTransformer(nn.Module):
     def __init__(self, vocabulary: Vocabulary, image_feature_size: int,num_attention_block: int,
                     caption_length: int, vocab_size: int, embedding_size: int, hidden_size: int,
