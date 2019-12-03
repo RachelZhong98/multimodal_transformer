@@ -18,14 +18,14 @@ class MultimodelTransformer(nn.Module):
         self.image_feature_size = image_feature_size
         self.num_attention_block = num_attention_block
         self.caption_length = caption_length
-        self.vocab_size = vocab_size
+        self.vocab_size = vocabulary.get_vocab_size()
         self._vocabulary = vocabulary
         self.embedding_size = embedding_size
         self.hidden_size = hidden_size
         self.feed_forward_dim = feed_forward_dim
         self.encode_dim = encode_dim
         self.num_heads = num_heads
-        self.max_caption_length = 20
+        self.max_caption_length = 16
 
         self._pad_index = vocabulary.get_token_index("@@UNKNOWN@@")
         self._boundary_index = vocabulary.get_token_index("@@BOUNDARY@@")
@@ -40,16 +40,16 @@ class MultimodelTransformer(nn.Module):
         self._embedding_layer = nn.Embedding.from_pretrained(
                 glove_vectors, freeze=True, padding_idx=self._pad_index
             )
-
-        self._output_projection = nn.Sequential(
-                nn.Linear(hidden_size, self.embedding_size), nn.Tanh()
-            )
-        self._output_layer = nn.Linear(self.embedding_size, vocab_size, bias=False)
-        self._output_layer.weight = self._embedding_layer.weight
-        self._log_softmax = nn.LogSoftmax(dim=1)
         self._updown_cell = UpDownCell(
             self.image_feature_size, self.embedding_size, self.hidden_size, attention_projection_size
         )
+        self._output_projection = nn.Sequential(
+                nn.Linear(hidden_size, self.embedding_size), nn.Tanh()
+            )
+        self._output_layer = nn.Linear(self.embedding_size, self.vocab_size, bias=False)
+        self._output_layer.weight = self._embedding_layer.weight
+        self._log_softmax = nn.LogSoftmax(dim=1)
+        
         # self.tgt_mask = None
         # # self.caption_lstm = nn.LSTM(input_size=self.embedding_size, hidden_size=hidden_size, num_layers=1)
         # self.caption_linear = nn.Linear(self.embedding_size, self.hidden_size)
@@ -106,8 +106,8 @@ class MultimodelTransformer(nn.Module):
     #     return self.caption_lstm(tokenized_words)
 
     def forward(self, image_features, 
-    caption_tokens:Optional[torch.Tensor] = None,
-    device:Optional[int]=0):
+        caption_tokens:Optional[torch.Tensor] = None,
+        device:Optional[int]=0):
         states = None
         batch_size, num_boxes, image_feature_size = image_features.size()
         if self.training and caption_tokens is not None:
@@ -118,6 +118,7 @@ class MultimodelTransformer(nn.Module):
                 self._boundary_index,
                 self._boundary_index,
             )
+            
             batch_size, max_caption_length = caption_tokens.size()
 
             # shape: (batch_size, max_caption_length)
@@ -127,14 +128,16 @@ class MultimodelTransformer(nn.Module):
             # Either way, we don't have to process it.
             num_decoding_steps = max_caption_length - 1
 
+            image_features = self.adapt_image_features(image_features)
+            image_features = self.encoder(image_features)
+            image_features = self.adapt_again(image_features)
+
             step_logits: List[torch.Tensor] = []
             for timestep in range(num_decoding_steps):
                 # shape: (batch_size,)
                 input_tokens = caption_tokens[:, timestep]
-
-                image_features = self.adapt_image_features(image_features)
-                image_features = self.encoder(image_features)
-                image_features = self.adapt_again(image_features)
+                
+                
                 # shape: (batch_size, num_classes)
                 output_logits, states = self._decode_step(image_features, input_tokens, states)
 
@@ -150,14 +153,16 @@ class MultimodelTransformer(nn.Module):
                     logits, caption_tokens[:, 1:].contiguous(), tokens_mask[:, 1:].contiguous()
                 )
             }
+            
         else:
             num_decoding_steps = self.max_caption_length
 
             image_features = self.adapt_image_features(image_features)
             image_features = self.encoder(image_features)
             image_features = self.adapt_again(image_features)
-            start_predictions = image_features.new_full((batch_size,), self._boundary_index).long()
 
+            start_predictions = image_features.new_full((batch_size,), self._boundary_index).long()
+    
             # Add image features as a default argument to match callable signature acceptable by
             # beam search class (previous predictions and states only).
             beam_decode_step = functools.partial(self._decode_step, image_features)
@@ -175,6 +180,7 @@ class MultimodelTransformer(nn.Module):
             #         self._min_constraints_to_satisfy,
             #     )
             # else:
+            
             all_top_k_predictions, log_probabilities = self._beam_search.search(
                 start_predictions, states, beam_decode_step
             )
@@ -182,6 +188,9 @@ class MultimodelTransformer(nn.Module):
 
             # shape: (batch_size, num_decoding_steps)
             output_dict = {"predictions": best_beam}
+            
+        
+        
 
         return output_dict
         
@@ -196,6 +205,10 @@ class MultimodelTransformer(nn.Module):
         for word, i in self._vocabulary.get_token_to_index_vocabulary().items():
             if word in glove.stoi:
                 glove_vectors[i] = glove.vectors[glove.stoi[word]]
+            # #Added
+            elif word != self._pad_index:
+                # Initialize by random vector.
+                glove_vectors[i] = 2 * torch.randn(300) - 1
 
         return glove_vectors
 

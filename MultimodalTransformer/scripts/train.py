@@ -147,10 +147,10 @@ if __name__ == "__main__":
         # Don't wrap to DataParallel if single GPU ID or -1 (CPU) is provided.
         model = nn.DataParallel(model, _A.gpu_ids)
 
-    optimizer = optim.Adam(
+    optimizer = optim.SGD(
         model.parameters(),
         lr=_C.OPTIM.LR,
-        # momentum=_C.OPTIM.MOMENTUM,
+        momentum=_C.OPTIM.MOMENTUM,
         weight_decay=_C.OPTIM.WEIGHT_DECAY,
     )
     lr_scheduler = optim.lr_scheduler.LambdaLR(  # type: ignore
@@ -197,7 +197,6 @@ if __name__ == "__main__":
         optimizer.zero_grad()
         output_dict = model(batch["image_features"], batch["caption_tokens"], device)
         batch_loss = output_dict["loss"].mean()
-
         batch_loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), _C.OPTIM.CLIP_GRADIENTS)
 
@@ -291,20 +290,21 @@ if __name__ == "__main__":
                 # Get evaluation metrics for nocaps val phase from EvalAI.
                 # keys: {"B1", "B2", "B3", "B4", "METEOR", "ROUGE-L", "CIDEr", "SPICE"}
                 # In each of these, keys:  {"in-domain", "near-domain", "out-domain", "entire"}
-                evaluation_metrics = evaluator.evaluate(predictions, iteration)
+                # Commented
+                # evaluation_metrics = evaluator.evaluate(predictions, iteration)
 
-                # Print and log all evaluation metrics to tensorboard.
-                print(f"Evaluation metrics after iteration {iteration}:")
-                for metric_name in evaluation_metrics:
-                    tensorboard_writer.add_scalars(
-                        f"metrics/{metric_name}", evaluation_metrics[metric_name], iteration
-                    )
-                    print(f"\t{metric_name}:")
-                    for domain in evaluation_metrics[metric_name]:
-                        print(f"\t\t{domain}:", evaluation_metrics[metric_name][domain])
+                # # Print and log all evaluation metrics to tensorboard.
+                # print(f"Evaluation metrics after iteration {iteration}:")
+                # for metric_name in evaluation_metrics:
+                #     tensorboard_writer.add_scalars(
+                #         f"metrics/{metric_name}", evaluation_metrics[metric_name], iteration
+                #     )
+                #     print(f"\t{metric_name}:")
+                #     for domain in evaluation_metrics[metric_name]:
+                #         print(f"\t\t{domain}:", evaluation_metrics[metric_name][domain])
 
-                # Serialize checkpoint and update best checkpoint by overall CIDEr.
-                checkpoint_manager.step(evaluation_metrics["CIDEr"]["entire"], iteration)
+                # # Serialize checkpoint and update best checkpoint by overall CIDEr.
+                # checkpoint_manager.step(evaluation_metrics["CIDEr"]["entire"], iteration)
             else:
                 # Serialize checkpoint, best checkpoint does not mean anything if skipping
                 # validation altogether.
