@@ -1,0 +1,36 @@
+RANDOM_SEED: 0
+
+DATA:
+  VOCABULARY: data/vocabulary
+  TRAIN_FEATURES: data/coco_train2017_features_maskrcnn.h5
+  INFER_FEATURES: data/nocaps_val_features_maskrcnn.h5
+
+  TRAIN_CAPTIONS: data/coco/captions_train2017.json
+  INFER_CAPTIONS: data/nocaps/nocaps_val_image_info.json
+
+  MAX_CAPTION_LENGTH:  20
+
+MODEL:
+  IMAGE_FEATURE_SIZE: 2048
+  EMBEDDING_SIZE: 300
+  NUM_ATTENTION_BLOCK: 4
+  CAPTION_LENGTH: 20
+  VOCAB_SIZE: 9343
+  HIDDEN_SIZE: 400
+  FEED_FORWARD_DIM: 128
+  ENCODE_DIM: 2048
+  NUM_HEADS: 2
+  # NUM_LAYERS: 1
+  USE_CBS: False
+  BEAM_SIZE: 5
+  ATTENTION_PROJECTION_SIZE: 768
+   
+  
+
+OPTIM:
+  BATCH_SIZE: 10
+  NUM_ITERATIONS: 70000
+  LR: 0.015
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.001
+  CLIP_GRADIENTS: 12.5
